@@ -1,0 +1,234 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard Microservices</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+            background-color: #f5f5f5;
+        }
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+        .service-card {
+            background: white;
+            border-radius: 8px;
+            padding: 20px;
+            margin-bottom: 20px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .status {
+            display: inline-block;
+            padding: 5px 10px;
+            border-radius: 15px;
+            font-size: 14px;
+        }
+        .status.active {
+            background: #e7f7ed;
+            color: #0d6832;
+        }
+        .status.inactive {
+            background: #ffe5e5;
+            color: #cf0000;
+        }
+        .button {
+            background: #007bff;
+            color: white;
+            border: none;
+            padding: 8px 15px;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+        .button:hover {
+            background: #0056b3;
+        }
+        .metrics {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin-top: 10px;
+        }
+        .metric-card {
+            background: #f8f9fa;
+            padding: 10px;
+            border-radius: 4px;
+            text-align: center;
+        }
+        .header {
+            display: flex;
+            justify-content: flex-end;
+            padding: 10px 0;
+            margin-bottom: 20px;
+        }
+        .user-info {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+        .logout-btn {
+            background: #dc3545;
+            color: white;
+            border: none;
+            padding: 8px 15px;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+        .logout-btn:hover {
+            background: #c82333;
+        }
+    </style>
+</head>
+<body>
+    <script src="js/auth.js"></script>
+    <script>
+        // Inisialisasi dan cek autentikasi
+        Auth.checkAuth();
+        Auth.initSession();
+
+        // Tampilkan pesan logout jika ada
+        window.onload = function() {
+            const logoutMessage = sessionStorage.getItem('logoutMessage');
+            if (logoutMessage) {
+                alert(logoutMessage);
+                sessionStorage.removeItem('logoutMessage');
+            }
+        }
+    </script>
+    <div class="container">
+        <div class="header">
+            <div class="user-info">
+                Selamat datang, <span id="userDisplay"></span>
+                <button class="logout-btn" onclick="handleLogout()">Logout</button>
+            </div>
+        </div>
+        <h1>Dashboard Microservices</h1>
+        
+        <!-- Nginx Service -->
+        <div class="service-card">
+            <h2>Nginx Service</h2>
+            <span class="status active" id="nginx-status">Aktif</span>
+            <p>Port: 7000</p>
+            <p>Fungsi: Reverse proxy dan load balancer</p>
+            <div class="metrics">
+                <div class="metric-card">
+                    <h3>Request/detik</h3>
+                    <div id="nginx-requests">0</div>
+                </div>
+                <div class="metric-card">
+                    <h3>Response Time</h3>
+                    <div id="nginx-response">0ms</div>
+                </div>
+            </div>
+            <button class="button" onclick="checkService('nginx')">Cek Status</button>
+        </div>
+
+        <!-- Main Server -->
+        <div class="service-card">
+            <h2>Server Utama</h2>
+            <span class="status active" id="server-status">Aktif</span>
+            <p>Port: 4000</p>
+            <p>Fungsi: API utama dan business logic</p>
+            <div class="metrics">
+                <div class="metric-card">
+                    <h3>CPU Usage</h3>
+                    <div id="server-cpu">0%</div>
+                </div>
+                <div class="metric-card">
+                    <h3>Memory Usage</h3>
+                    <div id="server-memory">0MB</div>
+                </div>
+            </div>
+            <button class="button" onclick="checkService('server')">Cek Status</button>
+        </div>
+
+        <!-- Microservices -->
+        <div class="service-card">
+            <h2>Microservices (3 Instances)</h2>
+            <span class="status active" id="micro-status">3/3 Aktif</span>
+            <p>Fungsi: Layanan terdistribusi</p>
+            <div class="metrics">
+                <div class="metric-card">
+                    <h3>Total Instances</h3>
+                    <div id="micro-instances">3</div>
+                </div>
+                <div class="metric-card">
+                    <h3>Load Average</h3>
+                    <div id="micro-load">0%</div>
+                </div>
+            </div>
+            <button class="button" onclick="checkService('microservice')">Cek Status</button>
+        </div>
+
+        <!-- PostgreSQL -->
+        <div class="service-card">
+            <h2>PostgreSQL Database</h2>
+            <span class="status active" id="db-status">Aktif</span>
+            <p>Port: 5432</p>
+            <p>Fungsi: Penyimpanan data</p>
+            <div class="metrics">
+                <div class="metric-card">
+                    <h3>Koneksi Aktif</h3>
+                    <div id="db-connections">0</div>
+                </div>
+                <div class="metric-card">
+                    <h3>Ukuran Database</h3>
+                    <div id="db-size">0MB</div>
+                </div>
+            </div>
+            <button class="button" onclick="checkService('postgres')">Cek Status</button>
+        </div>
+    </div>
+
+    <script>
+        // Fungsi simulasi untuk mengecek status service
+        function checkService(service) {
+            // Simulasi request ke API
+            setTimeout(() => {
+                updateMetrics(service);
+            }, 500);
+        }
+
+        // Update metrics (simulasi)
+        function updateMetrics(service) {
+            switch(service) {
+                case 'nginx':
+                    document.getElementById('nginx-requests').textContent = Math.floor(Math.random() * 100);
+                    document.getElementById('nginx-response').textContent = Math.floor(Math.random() * 200) + 'ms';
+                    break;
+                case 'server':
+                    document.getElementById('server-cpu').textContent = Math.floor(Math.random() * 100) + '%';
+                    document.getElementById('server-memory').textContent = Math.floor(Math.random() * 1000) + 'MB';
+                    break;
+                case 'microservice':
+                    document.getElementById('micro-instances').textContent = '3';
+                    document.getElementById('micro-load').textContent = Math.floor(Math.random() * 100) + '%';
+                    break;
+                case 'postgres':
+                    document.getElementById('db-connections').textContent = Math.floor(Math.random() * 50);
+                    document.getElementById('db-size').textContent = Math.floor(Math.random() * 1000) + 'MB';
+                    break;
+            }
+        }
+
+        // Update semua metrics setiap 5 detik
+        setInterval(() => {
+            ['nginx', 'server', 'microservice', 'postgres'].forEach(service => {
+                checkService(service);
+            });
+        }, 5000);
+
+        // Tampilkan username
+        document.getElementById('userDisplay').textContent = sessionStorage.getItem('username');
+
+        // Fungsi logout
+        function handleLogout() {
+            sessionStorage.clear();
+            window.location.href = 'login.html';
+        }
+    </script>
+</body>
+</html> 
